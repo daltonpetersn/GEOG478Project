@@ -32,7 +32,7 @@
         </style>
     </head>
     <body>
-        <div style="text-align: center; margin-bottom: 15vh;">
+        <div style="text-align: center; margin-bottom: 10vh;">
             <h1>Tornado Map Viewer</h1>
             <p>Click on the map to view tornado paths and details.</p>
         </div>
@@ -86,8 +86,7 @@
                             }
                         },
                         onEachFeature: function (feature, layer) {
-                            layer.bindPopup('Tornado ID: ' + feature.properties.id + '<br>' +
-                                            'Date: ' + feature.properties.date + '<br>' +
+                            layer.bindPopup('Date: ' + feature.properties.date + '<br>' +
                                             'Time: ' + feature.properties.time + '<br>' +
                                             'Rating: EF' + feature.properties.mag);
                         }
@@ -107,14 +106,13 @@
 
                 legend.onAdd = function (map) {
                     var div = L.DomUtil.create('div', 'info legend'),
-                        grades = [0, 1, 2, 3, 4, 5],
-                        labels = [];
+                        grades = [0, 1, 2, 3, 4, 5];
 
                     // Loop through the grades and generate a label with a colored square for each grade
                     for (var i = 0; i < grades.length; i++) {
                         div.innerHTML +=
-                            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-                            'EF' + grades[i] + (grades[i + 1] ? '&ndash;EF' + grades[i + 1] + '<br>' : '+');
+                            '<i style="background:' + getColor(grades[i]) + '"></i> ' +
+                            'EF' + grades[i] + '<br>';
                     }
                     return div;
                 };
