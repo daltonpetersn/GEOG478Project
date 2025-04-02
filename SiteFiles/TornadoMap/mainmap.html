@@ -5,41 +5,67 @@
         <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
         <link rel="stylesheet" href="style.css">
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <style>
-            .info {
-                padding: 6px 8px;
-                font: 14px/16px Arial, Helvetica, sans-serif;
-                background: white;
-                background: rgba(255,255,255,0.8);
-                box-shadow: 0 0 15px rgba(0,0,0,0.2);
-                border-radius: 5px;
-            }
-            .info h4 {
-                margin: 0 0 5px;
-                color: #777;
-            }
-            .legend {
-                line-height: 18px;
-                color: #555;
-            }
-            .legend i {
-                width: 18px;
-                height: 18px;
-                float: left;
-                margin-right: 8px;
-                opacity: 0.7;
-            }
-        </style>
     </head>
+
     <body>
-        <div style="text-align: center; margin-bottom: 10vh;">
-            <h1>Tornado Map Viewer</h1>
-            <p>Click on the map to view tornado paths and details.</p>
+
+        <header>
+            <div>
+            <h1 style="margin: 0;">Tornado Map Viewer</h1>
+            <p style="margin: 0;">Click on the map to view tornado paths and details.</p>
+            </div>
+            <nav>
+            <ul class="nav-links" style="list-style: none; display: flex; gap: 15px; margin: 0; padding: 0;">
+                <li><a href="mainmap.html">Tornado Map Viewer</a></li>
+                <li><a href="mobilehome.html">Risk Index</a></li>
+                <li><a href="contact.html">More Info</a></li>
+            </ul>
+            </nav>
+        </header>
+
+        <div class = content>
+            <div id="sidebar">
+                <h2>Map Tools</h2>
+                <div class="tool" id="LayerToggle">
+                    <h2>Layer Toggle</h2>
+                    <label><input type="checkbox" id="pathstoggle" checked> Tornado Paths</label><br>
+                    <label><input type="checkbox" id="pointstoggle" checked> Tornado Points</label>
+                </div>
+                
+                <div class="tool" id = "Filters">
+                    <h2>Filters</h2>
+
+                    <label for="startYear">Enter Year Range:</label><br>
+                    <input type="number" id="startYear" min="1950" max="2023" placeholder="Start year"> -
+                    <input type="number" id="endYear" min="1950" max="2023" placeholder="End year"><br><br>
+
+                    <label for="minRating">Minimum Rating:</label><br>
+                    <select id="minRating">
+                        <option value=0>EF0</option>
+                        <option value=1>EF1</option>
+                        <option value=2>EF2</option>
+                        <option value=3>EF3</option>
+                        <option value=4>EF4</option>
+                        <option value=5>EF5</option>
+                    </select><br><br>
+                    <label for="maxRating">Maximum Rating:</label><br>
+                    <select id="maxRating">
+                        <option value=0>EF0</option>
+                        <option value=1>EF1</option>
+                        <option value=2>EF2</option>
+                        <option value=3>EF3</option>
+                        <option value=4>EF4</option>
+                        <option value=5>EF5</option>
+                    </select><br><br>
+                    <button id="applyFilters" onclick="applyFilters()">Apply Filters</button>
+                </div>
+            </div>
+            <div id="map"></div>
         </div>
-        <div id="map" style="position: absolute; top: 20%; left: 0; width: 100%; height: 80%;"></div>
+
         <script>
             // Initialize the map and set its view to a specific location and zoom level
-            var map = L.map('map').setView([39.8283, -98.5795], 4); // Centered on the USA
+            var map = L.map('map').setView([39.8283, -98.5795], 4);
 
             // Add a tile layer to the map (OpenStreetMap tiles)
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -47,24 +73,21 @@
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
 
-            // Add paths json data to the map
-
-            var TornadoPaths = fetch('TornadoPaths.json')
-            var TornadoPoints = fetch('TornadoPoints.json')
-
             // Make color grabber function
             function getColor(d) {
-                return d === 0 ? '#00FF00' :
-                    d === 1 ? '#FFFF00' :
-                    d === 2 ? '#FFA500' :
-                    d === 3 ? '#FF0000' :
-                    d === 4 ? '#800080' :
-                    d === 5 ? '#0000FF' :
-                                '#000000'; // Default color if no match
+                switch (d) {
+                    case 0: return '#00FF00';
+                    case 1: return '#FFFF00';
+                    case 2: return '#FFA500';
+                    case 3: return '#FF0000';
+                    case 4: return '#800080';
+                    case 5: return '#0000FF';
+                    default: return null; // Return null for invalid 'mag' values
+                }
             }
 
             // Load the GeoJSON file using fetch
-            fetch('TornadoPaths.json')
+            fetch('TornadoPaths.geojson')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Failed to load GeoJSON file');
@@ -72,54 +95,160 @@
                     return response.json();
                 })
                 .then(data => {
-                    // Add the GeoJSON data to the map
-                    L.geoJSON(data, {
-                        style: function (feature) {
-                            switch (feature.properties.mag) {
-                                case 0: return { color: '#00FF00', weight: 2 };
-                                case 1: return { color: '#FFFF00', weight: 2 };
-                                case 2: return { color: '#FFA500', weight: 2 };
-                                case 3: return { color: '#FF0000', weight: 2 };
-                                case 4: return { color: '#800080', weight: 2 };
-                                case 5: return { color: '#0000FF', weight: 2 };
-                                default: return { color: '#000000', weight: 2 };
+                    // Add the GeoJSON data to the map and assign it to geoJsonLayer
+                    geoJsonLayer = L.geoJSON(data, {
+                    
+                        // Filter for features with invalid magnitudes
+                        filter: function (feature) {
+                            if (!feature.properties || feature.properties.mag === undefined) {
+                                return false; // Exclude features without a valid 'mag' property
                             }
+                            const mag = Number(feature.properties.mag);
+                            return !isNaN(mag) && mag >= 0 && mag <= 5; // Ensure 'mag' is a valid number between 1 and 5
+                        },  
+
+                        // Style features based on magnitude
+                        style: function (feature) {
+                            const color = getColor(feature.properties.mag);
+                            if (!color) {
+                                return null; // Exclude features with invalid 'mag' values
+                            }
+                            return { color: color, weight: 2 };
                         },
                         onEachFeature: function (feature, layer) {
                             layer.bindPopup('Date: ' + feature.properties.date + '<br>' +
                                             'Time: ' + feature.properties.time + '<br>' +
                                             'Rating: EF' + feature.properties.mag);
                         }
-                    }).addTo(map);
 
-                    // Fit the map to the bounds of the GeoJSON layer
-                    var bounds = L.geoJSON(data).getBounds();
-                    map.fitBounds(bounds);
+                    }).addTo(map);
                 })
                 .catch(error => {
-                    console.error('Error loading the GeoJSON file:', error);
+                    console.error('Error loading GeoJSON file:', error);
                 });
 
-                // Add a legend to the map
+                // Functions for Map Tools:
 
+                // Reference to the GeoJSON layer (to clear it later)
+                let geoJsonLayer;
+
+                // Function to apply filters and update the map
+                function applyFilters() {
+
+                    // Fetch the GeoJSON data again
+                    fetch('TornadoPaths.geojson')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Failed to load GeoJSON file');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Add the filtered GeoJSON data to the map
+                            if (geoJsonLayer) {
+                                map.removeLayer(geoJsonLayer); // Clear the previous layer
+                            }
+                            geoJsonLayer = L.geoJSON(data, {
+                                filter: function (feature) {
+                                    if (!feature.properties) {
+                                        return false; // Exclude features without properties
+                                    }
+                                
+                                    // Filter by year range
+                                    const startYear = Number(document.getElementById('startYear').value) || 1950; 
+                                    const endYear = Number(document.getElementById('endYear').value) || 2023; 
+                                    const yr = Number(feature.properties.yr);
+                                    if (isNaN(yr) || yr < startYear || yr > endYear) {
+                                        return false; // Exclude features outside the year range
+                                    }
+                                
+                                    // Filter by magnitude (rating)
+                                    const mag = Number(feature.properties.mag);
+                                    const minRating = Number(document.getElementById('minRating').value) || 0; 
+                                    const maxRating = Number(document.getElementById('maxRating').value) || 5; 
+                                    if (isNaN(mag) || mag < minRating || mag > maxRating) {
+                                        return false; // Exclude features outside the magnitude range
+                                    }
+                                
+                                    return true; // Include features that pass all filters
+                                },
+                                style: function (feature) {
+                                    const color = getColor(feature.properties.mag);
+                                    return { color: color, weight: 2 };
+                                },
+                                onEachFeature: function (feature, layer) {
+                                    layer.bindPopup('Date: ' + feature.properties.date + '<br>' +
+                                                    'Time: ' + feature.properties.time + '<br>' +
+                                                    'Rating: EF' + feature.properties.mag);
+                                }
+                            }).addTo(map);
+                        })
+                        .catch(error => {
+                            console.error('Error loading GeoJSON file:', error);
+                        });
+                }
+
+                // Attach the event listener to the layer toggle checkboxes
+                document.getElementById('pathstoggle').addEventListener('change', function () {
+                    if (this.checked) {
+                        // Add the Tornado Paths layer back to the map
+                        if (geoJsonLayer) {
+                            map.addLayer(geoJsonLayer);
+                        }
+                    } else {
+                        // Remove the Tornado Paths layer from the map
+                        if (geoJsonLayer) {
+                            map.removeLayer(geoJsonLayer);
+                        }
+                    }
+                });
+
+                // Remove the default GeoJSON layer when filters are applied
+                document.getElementById('applyFilters').addEventListener('click', function () {
+                    if (geoJsonLayer) {
+                        map.removeLayer(geoJsonLayer);
+                    }
+                });
+
+                // Attach the event listener to the layer toggle checkboxes
+                document.getElementById('pathstoggle').addEventListener('change', function () {
+                    if (this.checked) {
+                        // Add the Tornado Paths layer back to the map
+                        if (geoJsonLayer) {
+                            map.addLayer(geoJsonLayer);
+                        }
+                    } else {
+                        // Remove the Tornado Paths layer from the map
+                        if (geoJsonLayer) {
+                            map.removeLayer(geoJsonLayer);
+                        }
+                    }
+                });
+                    
+                // Attach the event listener to the "applyFilters" button
+                document.getElementById('applyFilters').addEventListener('click', applyFilters);
+
+               // Add a legend to the map
                 var legend = L.control({ position: 'bottomright' });
 
                 legend.onAdd = function (map) {
-                    var div = L.DomUtil.create('div', 'info legend'),
-                        grades = [0, 1, 2, 3, 4, 5];
+                    console.log('Adding legend to the map');
+                    var div = L.DomUtil.create('div', 'info legend');
+                    console.log('Legend container created:', div);
 
-                    // Loop through the grades and generate a label with a colored square for each grade
+                    var grades = [0, 1, 2, 3, 4, 5];
                     for (var i = 0; i < grades.length; i++) {
                         div.innerHTML +=
                             '<i style="background:' + getColor(grades[i]) + '"></i> ' +
                             'EF' + grades[i] + '<br>';
                     }
+
                     return div;
                 };
-
-                // Add the legend to the map
                 legend.addTo(map);
-
+                
         </script>
+
     </body>
+
 </html>
