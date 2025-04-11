@@ -3,7 +3,6 @@ html, body {
     color: #ffffff;
     font-family: 'Helvetica', sans-serif;
     margin: 0;
-    height: 100%;
     padding: 0;
     display: flex;
     flex-direction: column; 
@@ -25,7 +24,7 @@ p {
 
 header {
     background-color: #500000;
-    height: 15%;
+    height: 15vh;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -33,6 +32,14 @@ header {
     padding: 20px;
     margin: 0;
     border: none;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2em;
+    color: #ffffff;
+    font-family: 'Public Sans', sans-serif;
+    text-align: left;
 }
 
 .info {
@@ -104,17 +111,66 @@ header {
 }
 
 #textbox {
-    width: 100%;
+    width: 80%;
     height: 100%;
-    padding: 10px;
+    padding: 30px; 
     box-sizing: border-box;
-    align-items: center;
     background-color: white; 
     color: black; 
-    border-radius: 5px;
-    margin: 30px;
-    margin: auto;
+    border-radius: 20px;
+    margin: 30px auto; 
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    word-wrap: break-word; 
+    overflow-wrap: break-word; 
+
+    /* Add Flexbox properties */
+    display: flex;
+    flex-direction: column; /* Stack children vertically */
+    justify-content: center; /* Center vertically */
+    align-items: center; /* Center horizontally */
+}
+
+#textbox p{
+    line-height: 1.5; 
+    color: black; 
+    margin-bottom: 0 auto 20px;
+    width: 60%; 
+    text-align: center;
+}
+
+#textbox ul {
+    list-style-type: disc; 
+    padding-left: 20px; 
+    margin-bottom: 0 auto 20px;
+    width: 60%;
+    align-items: left;
+}
+
+#textbox ul li {
+    margin-bottom: 10px; 
+    color: black; 
+}  
+
+#textbox a {
+    color: blue;
+    text-decoration: none; 
+    font-weight: bold; 
+    text-align: center;
+    margin: auto;
+}
+
+#textbox h2 {
+    font-size: 2em; 
+    color: #800000; 
+    margin-bottom: 0 auto 20px;
+    text-align: center;
+}
+
+#textbox h3 {
+    font-size: 1.5em; 
+    color: black; 
+    margin-bottom: 0 auto 20px;
+    text-align: center;
 }
 
 nav {

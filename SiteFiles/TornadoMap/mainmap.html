@@ -16,9 +16,9 @@
             </div>
             <nav>
             <ul class="nav-links" style="list-style: none; display: flex; gap: 15px; margin: 0; padding: 0;">
-                <li><a href="mainmap.html">Tornado Map Viewer</a></li>
-                <li><a href="../RiskMap/tornadorisk.html">Risk Index</a></li>
-                <li><a href="../InfoPage/TornadoSafety&Awareness.html">More Info</a></li>
+                <li><a href="mainmap.html">Tornado Paths Map</a></li>
+                <li><a href="../RiskMap/tornadorisk.html">Tornado Risk Viewer</a></li>
+                <li><a href="../InfoPage/TornadoSafety&Awareness.html">Tornado Safety</a></li>
             </ul>
             </nav>
         </header>
@@ -29,7 +29,8 @@
                 <div class="tool" id="LayerToggle">
                     <h2>Layer Toggle</h2>
                     <label><input type="checkbox" id="pathstoggle" checked> Tornado Paths</label><br>
-                    <label><input type="checkbox" id="pointstoggle" checked> Tornado Points</label>
+                    <!-- <label><input type="checkbox" id="pointstoggle" checked> Tornado Points</label> -->
+                    <br>
                 </div>
                 
                 <div class="tool" id = "Filters">
@@ -57,7 +58,7 @@
                         <option value=4>EF4</option>
                         <option value=5>EF5</option>
                     </select><br><br>
-                    <button id="applyFilters" onclick="applyFilters()">Apply Filters</button>
+                    <button id="applyFilters" onclick="applyFilters()">Apply Filters</button><br><br>
                 </div>
             </div>
             <div id="map"></div>

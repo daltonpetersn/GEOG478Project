@@ -12,14 +12,14 @@
 <body>
     <header>
         <div>
-        <h1 style="margin: 0;">Tornado Risk by County</h1>
-        <p style="margin: 0;">Click on the map to view tornado paths and details.</p>
+        <h1 style="margin: 0;">Tornado Risk by County & State</h1>
+        <p style="margin: 0;">Click on the map to view tornado risk information</p>
         </div>
         <nav>
         <ul class="nav-links" style="list-style: none; display: flex; gap: 15px; margin: 0; padding: 0;">
-            <li><a href="../TornadoMap/mainmap.html">Tornado Map Viewer</a></li>
-            <li><a href="../RiskMap/tornadorisk.html">Risk Index</a></li>
-            <li><a href="../InfoPage/TornadoSafety&Awareness.html">More Info</a></li>
+            <li><a href="../TornadoMap/mainmap.html">Tornado Paths Map</a></li>
+            <li><a href="../RiskMap/tornadorisk.html">Tornado Risk Viewer</a></li>
+            <li><a href="../InfoPage/TornadoSafety&Awareness.html">Tornado Safety</a></li>
         </ul>
         </nav>
     </header>
@@ -31,14 +31,71 @@
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        function getColor(d) {
-            return d > .30 ? '#BD0026' :
-                   d > .20 ? '#FD8D3C' :
-                   d > .15 ? '#FED976' :
-                   d > .10 ? '#A1D99B' :
-                            '#31A354';
+        var currentLayer;
+
+        function loadGeoJSONForZoom(zoom) {
+        // Remove the current layer if it exists
+        if (currentLayer) {
+            map.removeLayer(currentLayer);
         }
+
+        // Determine which GeoJSON file to load based on zoom level (> 6 = matt, < 6 = bella)
+        let geojsonFile;
+        if (zoom >= 6) {
+            geojsonFile = 'tornadorisk.geojson.geojson'; 
+        } else {
+            geojsonFile = 'US_Json_IRG.json'; 
+        }
+
+        fetch(geojsonFile)
+            .then(response => response.json())
+            .then(data => {
+                currentLayer = L.geoJSON(data, {
+                    style: style,
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+            })
+            .catch(error => {
+                console.error('Error loading GeoJSON:', error);
+            });
+        }
+
+        // load initial geojson based on default zoom lvl
+        loadGeoJSONForZoom(map.getZoom());
+
+        // add listener for zoom
+        map.on('zoomend', function () {
+            var zoom = map.getZoom();
+            loadGeoJSONForZoom(zoom);
+        });
+
+        // color function for both layers
+        function getColor(d) {
+            if (d <= 1) {
+                // For Matt JSON (tornadorisk.geojson.geojson)
+                return d > .30 ? '#BD0026' :
+                       d > .20 ? '#FD8D3C' :
+                       d > .15 ? '#FED976' :
+                       d > .10 ? '#A1D99B' :
+                            '#31A354';
+            } else if (d > 1) {
+                // For Bella JSON (US_Json_IRG.json)
+                return d > 3000 ? '#BD0026' :
+                       d > 2000  ? '#FD8D3C' :
+                       d > 500  ? '#FED976' :
+                       d > 150  ? '#A1D99B' :
+                            '#31A354';
+            }
+            else {
+                // If something breaks load default color (grey)
+                return "#CCCCCC";
+            }
+        }
+
+        // style function for both layers
         function style(feature) {
+            if (feature.properties.RiskIndex !== undefined) {
+            // For the Matt JSON (tornadorisk.geojson.geojson)
             return {
                 fillColor: getColor(feature.properties.RiskIndex),
                 weight: 1,
@@ -47,53 +104,94 @@
                 dashArray: '3',
                 fillOpacity: 0.7
             };
+            } else if (feature.properties.Join_Count !== undefined) {
+            // For the Bella JSON (US_Json_IRG.json)
+            return {
+                fillColor: getColor(feature.properties.Join_Count),
+                weight: 1,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+            };
+            } else {
+            // If something breaks load default color (grey)
+            return {
+                fillColor: "#CCCCCC",
+                weight: 1,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+            };
+            }
         }
 
+        // popup function for risk index layer
+        // !!alter this function to handle both jsons
         function onEachFeature(feature, layer) {
-            var popupContent = "<strong>County:</strong> " + feature.properties.COUNTYNAME + "<br>" +
-                               "<strong>Risk Index:</strong> " + feature.properties.RiskIndex;
+            if (feature.properties.RiskIndex !== undefined) {
+                // For Matt JSON (tornadorisk.geojson.geojson)
+                popupContent = ("<strong>County:</strong> " + feature.properties.COUNTYNAME + "<br>" +
+                                "<strong>Risk Index:</strong> " + feature.properties.RiskIndex);
+            } else if (feature.properties.Join_Count !== undefined) {
+                // For Bella JSON (US_Json_IRG.json)
+                popupContent = ("<strong>State:</strong> " + feature.properties.NAME + "<br>" +
+                                "<strong>Number of Tornadoes:</strong> " + feature.properties.Join_Count);
+            }
             layer.bindPopup(popupContent);
         }
 
-        fetch('tornadorisk.geojson.geojson')
-            .then(response => response.json())
-            .then(data => {
-                var geoLayer = L.geoJSON(data, {
-                    style: style,
-                    onEachFeature: onEachFeature
-                }).addTo(map);
-                map.fitBounds(geoLayer.getBounds());
-            })
-            .catch(error => {
-                console.error('Error loading GeoJSON:', error);
-        });
-
+        // legend
         var legend = L.control({position: 'bottomright'});
 
         legend.onAdd = function (map) {
-            var div = L.DomUtil.create('div', 'legend'),
-                grades = [0, 0.10, 0.15, 0.20, 0.30],
-                colors = ['#31A354', '#A1D99B', '#FED976', '#FD8D3C', '#BD0026'];
-            div.innerHTML += '<b>Tornado Risk Index</b><br>';
-            for (var i = 0; i < grades.length; i++) {
-                div.innerHTML +=
-                    '<div style="margin-bottom: 4px;">' +
-                    '<span style="display:inline-block; width: 18px; height: 18px; background:' + colors[i] + '; margin-right:9px; opacity:0.7;"></span>' +
-                    grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+') +
-                    '</div>';
-            }
+            var div = L.DomUtil.create('div', 'legend');
+            updateLegend(div, map.getZoom());
             return div;
         };
+
+        function updateLegend(div, zoom) {
+            div.innerHTML = ''; // Clear the legend content
+            if (zoom >= 6) {
+            // Legend for Matt JSON (tornadorisk.geojson.geojson)
+            var grades = [0, 0.10, 0.15, 0.20, 0.30],
+                colors = ['#31A354', '#A1D99B', '#FED976', '#FD8D3C', '#BD0026'];
+            div.innerHTML += '<b>County Risk Index</b><br><br>';
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                '<div style="margin-bottom: 4px;">' +
+                '<span style="display:inline-block; width: 18px; height: 18px; background:' + colors[i] + '; margin-right:9px; opacity:0.7;"></span>' +
+                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+') +
+                '</div>';
+            }
+            } else {
+            // Legend for Bella JSON (US_Json_IRG.json)
+            var grades = [0, 150, 500, 2000, 3000],
+                colors = ['#31A354', '#A1D99B', '#FED976', '#FD8D3C', '#BD0026'];
+            div.innerHTML += '<b>Number of Tornadoes Since 1950</b><br><br>';
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                '<div style="margin-bottom: 4px;">' +
+                '<span style="display:inline-block; width: 18px; height: 18px; background:' + colors[i] + '; margin-right:9px; opacity:0.7;"></span>' +
+                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+') +
+                '</div>';
+            }
+            }
+        }
+
+        map.on('zoomend', function () {
+            var zoom = map.getZoom();
+            var legendDiv = document.querySelector('.legend');
+            if (legendDiv) {
+            updateLegend(legendDiv, zoom);
+            }
+        });
+
         legend.addTo(map);
+
+        legend.addTo(map);
+
     </script>
-
-    <div class="source-link"><a href="https://www.spc.noaa.gov" target="_blank">NOAA Storm Prediction Center</a>
-
-    </div>
-
-    <div class="north-arrow">
-        <img src="https://upload.widimedia.org/wikipedia/commons/thumb/2/24/North_arrow_simple.svg/120px-North_arrow_simple.svg.png"/>
-
-    </div>
 </body>
 </html>
