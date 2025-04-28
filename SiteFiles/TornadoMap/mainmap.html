@@ -1,3 +1,7 @@
+<!-- name: mainmap.html
+author: Dalton Peterson
+purpose: creates main tornado paths viewer map page -->
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -65,16 +69,14 @@
         </div>
 
         <script>
-            // Initialize the map and set its view to a specific location and zoom level
             var map = L.map('map').setView([39.8283, -98.5795], 4);
 
-            // Add a tile layer to the map (OpenStreetMap tiles)
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
 
-            // Make color grabber function
+            // color function
             function getColor(d) {
                 switch (d) {
                     case 0: return '#00FF00';
@@ -83,11 +85,11 @@
                     case 3: return '#FF0000';
                     case 4: return '#800080';
                     case 5: return '#0000FF';
-                    default: return null; // Return null for invalid 'mag' values
+                    default: return null; 
                 }
             }
 
-            // Load the GeoJSON file using fetch
+            // find geojson
             fetch('TornadoPaths.geojson')
                 .then(response => {
                     if (!response.ok) {
@@ -96,23 +98,20 @@
                     return response.json();
                 })
                 .then(data => {
-                    // Add the GeoJSON data to the map and assign it to geoJsonLayer
                     geoJsonLayer = L.geoJSON(data, {
                     
-                        // Filter for features with invalid magnitudes
                         filter: function (feature) {
                             if (!feature.properties || feature.properties.mag === undefined) {
-                                return false; // Exclude features without a valid 'mag' property
+                                return false; 
                             }
                             const mag = Number(feature.properties.mag);
-                            return !isNaN(mag) && mag >= 0 && mag <= 5; // Ensure 'mag' is a valid number between 1 and 5
+                            return !isNaN(mag) && mag >= 0 && mag <= 5; 
                         },  
 
-                        // Style features based on magnitude
                         style: function (feature) {
                             const color = getColor(feature.properties.mag);
                             if (!color) {
-                                return null; // Exclude features with invalid 'mag' values
+                                return null;
                             }
                             return { color: color, weight: 2 };
                         },
@@ -128,15 +127,13 @@
                     console.error('Error loading GeoJSON file:', error);
                 });
 
-                // Functions for Map Tools:
+                // MAP TOOLS FUNCTIONS:
 
-                // Reference to the GeoJSON layer (to clear it later)
                 let geoJsonLayer;
 
-                // Function to apply filters and update the map
+                // apply filters function
                 function applyFilters() {
 
-                    // Fetch the GeoJSON data again
                     fetch('TornadoPaths.geojson')
                         .then(response => {
                             if (!response.ok) {
@@ -145,22 +142,20 @@
                             return response.json();
                         })
                         .then(data => {
-                            // Add the filtered GeoJSON data to the map
                             if (geoJsonLayer) {
-                                map.removeLayer(geoJsonLayer); // Clear the previous layer
+                                map.removeLayer(geoJsonLayer);
                             }
                             geoJsonLayer = L.geoJSON(data, {
                                 filter: function (feature) {
                                     if (!feature.properties) {
-                                        return false; // Exclude features without properties
+                                        return false; 
                                     }
                                 
-                                    // Filter by year range
                                     const startYear = Number(document.getElementById('startYear').value) || 1950; 
                                     const endYear = Number(document.getElementById('endYear').value) || 2023; 
                                     const yr = Number(feature.properties.yr);
                                     if (isNaN(yr) || yr < startYear || yr > endYear) {
-                                        return false; // Exclude features outside the year range
+                                        return false; 
                                     }
                                 
                                     // Filter by magnitude (rating)
@@ -168,10 +163,10 @@
                                     const minRating = Number(document.getElementById('minRating').value) || 0; 
                                     const maxRating = Number(document.getElementById('maxRating').value) || 5; 
                                     if (isNaN(mag) || mag < minRating || mag > maxRating) {
-                                        return false; // Exclude features outside the magnitude range
+                                        return false; 
                                     }
                                 
-                                    return true; // Include features that pass all filters
+                                    return true; 
                                 },
                                 style: function (feature) {
                                     const color = getColor(feature.properties.mag);
@@ -189,47 +184,30 @@
                         });
                 }
 
-                // Attach the event listener to the layer toggle checkboxes
-                document.getElementById('pathstoggle').addEventListener('change', function () {
-                    if (this.checked) {
-                        // Add the Tornado Paths layer back to the map
-                        if (geoJsonLayer) {
-                            map.addLayer(geoJsonLayer);
-                        }
-                    } else {
-                        // Remove the Tornado Paths layer from the map
-                        if (geoJsonLayer) {
-                            map.removeLayer(geoJsonLayer);
-                        }
-                    }
-                });
-
-                // Remove the default GeoJSON layer when filters are applied
+                // Remove original layers when filters are applied
                 document.getElementById('applyFilters').addEventListener('click', function () {
                     if (geoJsonLayer) {
                         map.removeLayer(geoJsonLayer);
                     }
                 });
 
-                // Attach the event listener to the layer toggle checkboxes
+                // layer toggle event listener
                 document.getElementById('pathstoggle').addEventListener('change', function () {
                     if (this.checked) {
-                        // Add the Tornado Paths layer back to the map
                         if (geoJsonLayer) {
                             map.addLayer(geoJsonLayer);
                         }
                     } else {
-                        // Remove the Tornado Paths layer from the map
                         if (geoJsonLayer) {
                             map.removeLayer(geoJsonLayer);
                         }
                     }
                 });
                     
-                // Attach the event listener to the "applyFilters" button
+                // applyFilters button event listener
                 document.getElementById('applyFilters').addEventListener('click', applyFilters);
 
-               // Add a legend to the map
+               // Map Legend
                 var legend = L.control({ position: 'bottomright' });
 
                 legend.onAdd = function (map) {

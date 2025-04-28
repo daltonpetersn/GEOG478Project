@@ -122,12 +122,10 @@ header h1 {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     word-wrap: break-word; 
     overflow-wrap: break-word; 
-
-    /* Add Flexbox properties */
     display: flex;
-    flex-direction: column; /* Stack children vertically */
-    justify-content: center; /* Center vertically */
-    align-items: center; /* Center horizontally */
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
 }
 
 #textbox p{

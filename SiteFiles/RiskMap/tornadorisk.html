@@ -1,6 +1,9 @@
+<!-- name: tornadorisk.html
+authors: Isabella Griffo and Matthew Aplin
+purpose: creates tornado risk map page -->
+
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
     <title>Tornado Risk Interactive Map</title>
@@ -33,13 +36,13 @@
 
         var currentLayer;
 
+        // function to load geojson for zoom level
         function loadGeoJSONForZoom(zoom) {
-        // Remove the current layer if it exists
         if (currentLayer) {
             map.removeLayer(currentLayer);
         }
 
-        // Determine which GeoJSON file to load based on zoom level (> 6 = matt, < 6 = bella)
+        // find geojson for zoom level (> 6 = matt, < 6 = bella)
         let geojsonFile;
         if (zoom >= 6) {
             geojsonFile = 'tornadorisk.geojson.geojson'; 
@@ -95,7 +98,7 @@
         // style function for both layers
         function style(feature) {
             if (feature.properties.RiskIndex !== undefined) {
-            // For the Matt JSON (tornadorisk.geojson.geojson)
+            // For Matt JSON (tornadorisk.geojson.geojson)
             return {
                 fillColor: getColor(feature.properties.RiskIndex),
                 weight: 1,
@@ -105,7 +108,7 @@
                 fillOpacity: 0.7
             };
             } else if (feature.properties.Join_Count !== undefined) {
-            // For the Bella JSON (US_Json_IRG.json)
+            // For Bella JSON (US_Json_IRG.json)
             return {
                 fillColor: getColor(feature.properties.Join_Count),
                 weight: 1,
@@ -128,7 +131,6 @@
         }
 
         // popup function for risk index layer
-        // !!alter this function to handle both jsons
         function onEachFeature(feature, layer) {
             if (feature.properties.RiskIndex !== undefined) {
                 // For Matt JSON (tornadorisk.geojson.geojson)
@@ -152,7 +154,7 @@
         };
 
         function updateLegend(div, zoom) {
-            div.innerHTML = ''; // Clear the legend content
+            div.innerHTML = ''; 
             if (zoom >= 6) {
             // Legend for Matt JSON (tornadorisk.geojson.geojson)
             var grades = [0, 0.10, 0.15, 0.20, 0.30],
